@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'services/translate_service.dart';
 import 'services/text_to_speech_service.dart';
 import 'services/speech_to_text.dart';
 
 class TranslateSpeakDemo extends StatefulWidget {
   const TranslateSpeakDemo({super.key});
+
   @override
   State<TranslateSpeakDemo> createState() => _TranslateSpeakDemoState();
 }
@@ -19,6 +21,16 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   String status = "Type something and press the mic.";
   String translatedText = "";
   bool isListening = false;
+  String sourceLanguage = 'en';
+  String targetLanguage = 'tl';
+
+  final languageList = [
+    {'code': 'en', 'name': 'English'},
+    {'code': 'tl', 'name': 'Tagalog'},
+    {'code': 'de', 'name': 'German'},
+    {'code': 'zh', 'name': 'Chinese'},
+    // Add more as needed
+  ];
 
   @override
   void initState() {
@@ -48,14 +60,14 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
 
     try {
       setState(() => status = "Translating...");
-      final translated = await _translateService.translate(inputText, 'tl');
+      final translated = await _translateService.translate(inputText, targetLanguage);
 
       setState(() {
         translatedText = translated;
         status = "Speaking...";
       });
 
-      await _ttsService.speak(translated, 'tl');
+      await _ttsService.speak(translated, targetLanguage);
 
       setState(() => status = "Done.");
     } catch (e) {
@@ -66,9 +78,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   void _toggleListening() {
     if (isListening) {
       _speechService.stopListening();
-      setState(() {
-        isListening = false;
-      });
+      setState(() => isListening = false);
     } else {
       _speechService.startListening();
       setState(() {
@@ -81,7 +91,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Translate & Speak")),
+      appBar: AppBar(title: const Text("Translate & Speak")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -89,21 +99,60 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
             TextField(
               controller: _textController,
               decoration: InputDecoration(
-                labelText: "Enter text to translate",
-                border: OutlineInputBorder(),
+                hintText: "Enter text to translate",
+                counterText: '${_textController.text.length}/2000',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _textController.clear();
+                    setState(() {
+                      translatedText = "";
+                      status = "Cleared.";
+                    });
+                  },
+                ),
+                border: const OutlineInputBorder(),
               ),
-              minLines: 1,
-              maxLines: 4,
+              maxLength: 2000,
+              maxLines: null,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: sourceLanguage,
+                    isExpanded: true,
+                    onChanged: (val) => setState(() => sourceLanguage = val!),
+                    items: languageList.map((lang) => DropdownMenuItem(
+                      value: lang['code'],
+                      child: Text(lang['name']!),
+                    )).toList(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: targetLanguage,
+                    isExpanded: true,
+                    onChanged: (val) => setState(() => targetLanguage = val!),
+                    items: languageList.map((lang) => DropdownMenuItem(
+                      value: lang['code'],
+                      child: Text(lang['name']!),
+                    )).toList(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 ElevatedButton.icon(
                   onPressed: _translateAndSpeak,
-                  icon: Icon(Icons.play_arrow),
-                  label: Text("Translate & Speak"),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text("Translate & Speak"),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: () {
                     _textController.clear();
@@ -112,48 +161,64 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
                       status = "Cleared.";
                     });
                   },
-                  child: Text("Clear"),
+                  child: const Text("Clear"),
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _toggleListening,
-                  icon: Icon(isListening ? Icons.stop : Icons.mic),
-                  label: Text(isListening ? "Stop" : "Speak"),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: DropdownButton<String>(
-                    value: _speechService.selectedLocaleId,
-                    isExpanded: true,
-                    onChanged: (newLocale) {
-                      setState(() {
-                        _speechService.selectedLocaleId = newLocale ?? '';
-                      });
-                    },
-                    items: _speechService.localeNames
-                        .map((locale) => DropdownMenuItem(
-                              value: locale.localeId,
-                              child: Text(locale.name),
-                            ))
-                        .toList(),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    color: Colors.blueAccent,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          translatedText,
+                          style: const TextStyle(fontSize: 24, color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.copy, color: Colors.white),
+                              onPressed: () => Clipboard.setData(
+                                  ClipboardData(text: translatedText)),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.volume_up, color: Colors.white),
+                              onPressed: () => _ttsService.speak(translatedText, targetLanguage),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.fullscreen, color: Colors.white),
+                              onPressed: () {},
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: FloatingActionButton(
+                      onPressed: _toggleListening,
+                      child: Icon(isListening ? Icons.stop : Icons.mic),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 10),
             Text(
               status,
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 10),
-            Text(
-              translatedText,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
           ],
