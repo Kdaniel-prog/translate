@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class TranslationResultBox extends StatelessWidget {
   final String translatedText;
@@ -7,11 +6,11 @@ class TranslationResultBox extends StatelessWidget {
   final VoidCallback onSpeak;
 
   const TranslationResultBox({
-    Key? key,
+    super.key,
     required this.translatedText,
     required this.onCopy,
     required this.onSpeak,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

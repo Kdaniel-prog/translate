@@ -34,12 +34,21 @@ class TranslateInputBox extends StatelessWidget {
             controller: controller,
             maxLength: 2000,
             maxLines: null,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: "....",
               border: InputBorder.none,
-              counterText: '${controller.text.length}/2000',
+              counterText: '', // Hide default counter
             ),
           ),
+          const SizedBox(height: 100), // Add vertical space
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${controller.text.length}/2000',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          const SizedBox(height: 10), 
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -47,13 +56,13 @@ class TranslateInputBox extends StatelessWidget {
                 onPressed: onClear,
                 child: const Text("Clear"),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 20),
               ElevatedButton(
                 onPressed: onTranslate,
-                child: const Text("Translate"),
+                child: const Text("Translate & Read"),
               ),
             ],
-          )
+          ),         
         ],
       ),
     );
