@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'services/translate_speak_service.dart';
+import 'services/translate_service.dart';
+import 'services/text_to_speech_service.dart';
+import 'services/speech_to_text.dart';
 
 class TranslateSpeakDemo extends StatefulWidget {
   const TranslateSpeakDemo({super.key});
@@ -8,8 +10,11 @@ class TranslateSpeakDemo extends StatefulWidget {
 }
 
 class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
-  late TranslateSpeakService _service;
-  final TextEditingController _textController = TextEditingController();
+  final _translateService = TranslateService();
+  final _ttsService = TextToSpeechService();
+  final _textController = TextEditingController();
+
+  late TranslateSpeakService _speechService;
 
   String status = "Type something and press the mic.";
   String translatedText = "";
@@ -18,24 +23,59 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   @override
   void initState() {
     super.initState();
-    _service = TranslateSpeakService(
+    _speechService = TranslateSpeakService(
       onStatus: (newStatus) => setState(() => status = newStatus),
       onResult: (newText) => setState(() {
         isListening = false;
-        translatedText = newText;
         _textController.text = newText;
         _textController.selection =
             TextSelection.collapsed(offset: newText.length);
       }),
     );
-    _service.initialize();
+    _speechService.initialize();
   }
 
   @override
   void dispose() {
-    _service.dispose();
+    _ttsService.dispose();
     _textController.dispose();
     super.dispose();
+  }
+
+  Future<void> _translateAndSpeak() async {
+    final inputText = _textController.text.trim();
+    if (inputText.isEmpty) return;
+
+    try {
+      setState(() => status = "Translating...");
+      final translated = await _translateService.translate(inputText, 'tl');
+
+      setState(() {
+        translatedText = translated;
+        status = "Speaking...";
+      });
+
+      await _ttsService.speak(translated, 'tl');
+
+      setState(() => status = "Done.");
+    } catch (e) {
+      setState(() => status = "Error: $e");
+    }
+  }
+
+  void _toggleListening() {
+    if (isListening) {
+      _speechService.stopListening();
+      setState(() {
+        isListening = false;
+      });
+    } else {
+      _speechService.startListening();
+      setState(() {
+        isListening = true;
+        status = "Listening...";
+      });
+    }
   }
 
   @override
@@ -59,11 +99,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
             Row(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
-                    if (_textController.text.trim().isNotEmpty) {
-                      _service.translateAndSpeak(_textController.text.trim(), 'tl');
-                    }
-                  },
+                  onPressed: _translateAndSpeak,
                   icon: Icon(Icons.play_arrow),
                   label: Text("Translate & Speak"),
                 ),
@@ -84,33 +120,21 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
             Row(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
-                    if (isListening) {
-                      _service.stopListening();
-                      setState(() {
-                        isListening = false;
-                      });
-                    } else {
-                      _service.startListening();
-                      setState(() {
-                        isListening = true;
-                      });
-                    }
-                  },
+                  onPressed: _toggleListening,
                   icon: Icon(isListening ? Icons.stop : Icons.mic),
                   label: Text(isListening ? "Stop" : "Speak"),
                 ),
                 SizedBox(width: 10),
                 Expanded(
                   child: DropdownButton<String>(
-                    value: _service.selectedLocaleId,
+                    value: _speechService.selectedLocaleId,
                     isExpanded: true,
                     onChanged: (newLocale) {
                       setState(() {
-                        _service.selectedLocaleId = newLocale ?? '';
+                        _speechService.selectedLocaleId = newLocale ?? '';
                       });
                     },
-                    items: _service.localeNames
+                    items: _speechService.localeNames
                         .map((locale) => DropdownMenuItem(
                               value: locale.localeId,
                               child: Text(locale.name),
@@ -121,9 +145,11 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
               ],
             ),
             SizedBox(height: 20),
-            Text(status,
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                textAlign: TextAlign.center),
+            Text(
+              status,
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: 10),
             Text(
               translatedText,
