@@ -1,0 +1,23 @@
+final List<Map<String, String>> languageList = [
+  {'code': 'en', 'name': 'English'},
+  {'code': 'tl', 'name': 'Filipino'},
+  {'code': 'de', 'name': 'German'},
+  {'code': 'zh', 'name': 'Chinese'},
+  {'code': 'hu', 'name': 'Hungarian'},
+  {'code': 'es', 'name': 'Spanish'},
+  {'code': 'fr', 'name': 'French'},
+  {'code': 'it', 'name': 'Italian'},
+  {'code': 'ja', 'name': 'Japanese'},
+  {'code': 'ko', 'name': 'Korean'},
+  {'code': 'ru', 'name': 'Russian'},
+  {'code': 'pt', 'name': 'Portuguese'},
+  {'code': 'ar', 'name': 'Arabic'},
+  {'code': 'hi', 'name': 'Hindi'},
+  {'code': 'id', 'name': 'Indonesian'},
+  {'code': 'th', 'name': 'Thai'},
+  {'code': 'tr', 'name': 'Turkish'},
+  {'code': 'vi', 'name': 'Vietnamese'},
+  {'code': 'pl', 'name': 'Polish'},
+  {'code': 'uk', 'name': 'Ukrainian'},
+  // Add more if needed
+];

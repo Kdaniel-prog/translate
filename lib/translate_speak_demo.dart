@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'services/translate_service.dart';
 import 'services/text_to_speech_service.dart';
 import 'services/speech_to_text.dart';
+import 'data/languages.dart';
 
 class TranslateSpeakDemo extends StatefulWidget {
   const TranslateSpeakDemo({super.key});
@@ -23,14 +24,6 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   bool isListening = false;
   String sourceLanguage = 'en';
   String targetLanguage = 'tl';
-
-  final languageList = [
-    {'code': 'en', 'name': 'English'},
-    {'code': 'tl', 'name': 'Tagalog'},
-    {'code': 'de', 'name': 'German'},
-    {'code': 'zh', 'name': 'Chinese'},
-    // Add more as needed
-  ];
 
   @override
   void initState() {
@@ -136,6 +129,26 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
                     )).toList(),
                   ),
                 ),
+                // Swap button in the middle
+                IconButton(
+                  icon: const Icon(Icons.swap_horiz),
+                  tooltip: "Swap languages",
+                  onPressed: () {
+                    setState(() {
+                      // Swap the languages
+                      final tempLang = sourceLanguage;
+                      sourceLanguage = targetLanguage;
+                      targetLanguage = tempLang;
+                      
+                      // Swap the texts
+                      final tempText = _textController.text;
+                      _textController.text = translatedText;
+                      translatedText = tempText;
+
+                      status = "Languages and texts swapped.";
+                    });
+                  },
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: DropdownButton<String>(
@@ -156,7 +169,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
                 ElevatedButton.icon(
                   onPressed: _translateAndSpeak,
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text("Translate & Speak"),
+                  label: const Text("Translate & Read"),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton(
@@ -200,10 +213,6 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
                             IconButton(
                               icon: const Icon(Icons.volume_up, color: Colors.white),
                               onPressed: () => _ttsService.speak(translatedText, targetLanguage),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.fullscreen, color: Colors.white),
-                              onPressed: () {},
                             ),
                           ],
                         ),
