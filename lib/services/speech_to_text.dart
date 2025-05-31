@@ -1,9 +1,10 @@
+import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 typedef StatusCallback = void Function(String status);
 typedef ResultCallback = void Function(String text);
 
-class TranslateSpeakService {
+class SpeechToText {
   final stt.SpeechToText _speech = stt.SpeechToText();
 
   bool isListening = false;
@@ -14,10 +15,12 @@ class TranslateSpeakService {
 
   final StatusCallback onStatus;
   final ResultCallback onResult;
+  final VoidCallback? onClearText; // optional callback
 
-  TranslateSpeakService({
+  SpeechToText({
     required this.onStatus,
     required this.onResult,
+    this.onClearText,
   });
 
   Future<void> initialize() async {
@@ -37,6 +40,10 @@ class TranslateSpeakService {
     } else {
       onStatus("Speech recognition not available.");
     }
+  }
+
+  void clearText() {
+    onClearText?.call();
   }
 
   void startListening() async {
@@ -59,6 +66,7 @@ class TranslateSpeakService {
   void stopListening() async {
     await _speech.stop();
     isListening = false;
+
     onStatus("Stopped listening.");
   }
  

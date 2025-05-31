@@ -16,7 +16,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   final _ttsService = TextToSpeechService();
   final _textController = TextEditingController();
 
-  late TranslateSpeakService _speechService;
+  late SpeechToText _speechService;
 
   String status = "Type something and press the mic.";
   String translatedText = "";
@@ -35,13 +35,16 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   @override
   void initState() {
     super.initState();
-    _speechService = TranslateSpeakService(
+    _speechService = SpeechToText(
       onStatus: (newStatus) => setState(() => status = newStatus),
       onResult: (newText) => setState(() {
         isListening = false;
         _textController.text = newText;
         _textController.selection =
             TextSelection.collapsed(offset: newText.length);
+      }),
+      onClearText: () => setState(() {
+        _textController.clear();
       }),
     );
     _speechService.initialize();
@@ -78,12 +81,15 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   void _toggleListening() {
     if (isListening) {
       _speechService.stopListening();
-      setState(() => isListening = false);
+      setState(() {
+        isListening = false;
+      });
     } else {
       _speechService.startListening();
       setState(() {
         isListening = true;
         status = "Listening...";
+
       });
     }
   }
@@ -104,7 +110,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
-                    _textController.clear();
+                    _textController.text = "";
                     setState(() {
                       translatedText = "";
                       status = "Cleared.";
