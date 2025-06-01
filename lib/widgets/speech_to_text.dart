@@ -25,9 +25,9 @@ class SpeechToText {
 
   Future<void> initialize() async {
     speechAvailable = await _speech.initialize(
-      onStatus: (val) => onStatus("Speech status: $val"),
+      onStatus: (val) => onStatus(val),
       onError: (val) {
-        onStatus("Speech error: ${val.errorMsg}");
+        onStatus("Error! ${val.errorMsg}");
         isListening = false;
       },
     );

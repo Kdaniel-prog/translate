@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:translate/widgets/UI/language_dropdown.dart';
-import 'package:translate/widgets/UI/translate_input_box.dart';
-import 'package:translate/widgets/UI/translated_result_box.dart';
+import 'package:kd_translater/widgets/UI/language_dropdown.dart';
+import 'package:kd_translater/widgets/UI/translate_input_box.dart';
+import 'package:kd_translater/widgets/UI/translated_result_box.dart';
 import 'services/translate_service.dart';
 import 'services/text_to_speech_service.dart';
 import 'widgets/speech_to_text.dart';
@@ -184,7 +184,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
             const SizedBox(height: 10),
             //status text
             Text(
-              status,
+              'Status: $status',
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
               textAlign: TextAlign.center,
             ),

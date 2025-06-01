@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'package:translate/translate_speak_demo.dart';
+import 'package:kd_translater/translate_speak_demo.dart';
 
 void main() => runApp(MyApp());
 

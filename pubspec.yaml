@@ -1,7 +1,7 @@
-name: translate
-description: "A new Flutter project."
+name: kd_translater
+description: "AI Powered translater"
 publish_to: 'none'
-version: 0.1.0
+version: 1.1.0
 
 environment:
   sdk: ^3.8.0
@@ -22,8 +22,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-flutter_icons:
+flutter_launcher_icons:
+  image_path: assets/app_logo.png
   android: true
   ios: true
-  image_path: "assets/app_icon.png"
 
