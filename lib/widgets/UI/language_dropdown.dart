@@ -5,13 +5,15 @@ class LanguageDropdown extends StatelessWidget {
   final List<Map<String, String>> languageList;
   final void Function(String) onChanged;
   final Color backgroundColor;
+  final Color textColor;
 
   const LanguageDropdown({
       super.key,
       required this.selectedLanguage,
       required this.languageList,
       required this.onChanged,
-      this.backgroundColor = Colors.white
+      required this.backgroundColor,
+      required this.textColor
     });
 
   @override
@@ -27,19 +29,30 @@ class LanguageDropdown extends StatelessWidget {
           value: selectedLanguage,
           isExpanded: true,
           underline: const SizedBox(),
-          iconEnabledColor: Colors.black,
-          dropdownColor: Colors.white,
+          iconEnabledColor: textColor,
+          dropdownColor: backgroundColor,
           onChanged: (val) {
             if (val != null) {
               onChanged(val);
             }
           },
           items: languageList.map((lang) {
+            final isSelected = lang['code'] == selectedLanguage;
             return DropdownMenuItem(
               value: lang['code'],
-              child: Text(
-                lang['name']!,
-                style: const TextStyle(color: Colors.black), // dropdown menu text
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  lang['name']!,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
+                  ),
+                ),
               ),
             );
           }).toList(),

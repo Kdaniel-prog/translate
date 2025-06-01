@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:translate/widgets/language_dropdown.dart';
-import 'package:translate/widgets/translate_input_box.dart';
-import 'package:translate/widgets/translated_result_box.dart';
+import 'package:translate/widgets/UI/language_dropdown.dart';
+import 'package:translate/widgets/UI/translate_input_box.dart';
+import 'package:translate/widgets/UI/translated_result_box.dart';
 import 'services/translate_service.dart';
 import 'services/text_to_speech_service.dart';
-import 'services/speech_to_text.dart';
+import 'widgets/speech_to_text.dart';
 import 'data/languages.dart';
 
 class TranslateSpeakDemo extends StatefulWidget {
@@ -128,6 +128,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
                   languageList: languageList,
                   onChanged: (val) => setState(() => sourceLanguage = val),
                   backgroundColor: Color.fromARGB(255, 228, 229, 230), // Material Blue 500
+                  textColor: Colors.black,
                 ),
                 const SizedBox(width: 12),                
                 // Swap button in the middle
@@ -155,10 +156,12 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
                   languageList: languageList,
                   onChanged: (val) => setState(() => targetLanguage = val),
                   backgroundColor: Color.fromARGB(255, 156, 200, 250), // Material Blue 500
+                  textColor: Colors.white,
                 ),
               ],
             ),
             const SizedBox(height: 16),
+            //Translated box
             Expanded(
               child: Stack(
                 children: [
@@ -179,6 +182,7 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
               ),
             ),
             const SizedBox(height: 10),
+            //status text
             Text(
               status,
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),

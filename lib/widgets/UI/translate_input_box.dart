@@ -35,7 +35,7 @@ class TranslateInputBox extends StatelessWidget {
             maxLength: 2000,
             maxLines: null,
             decoration: const InputDecoration(
-              hintText: "....",
+              hintText: "Text to translate...",
               border: InputBorder.none,
               counterText: '', // Hide default counter
             ),
