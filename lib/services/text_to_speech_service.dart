@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TextToSpeechService {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -23,20 +25,28 @@ class TextToSpeechService {
       'speed': 'slow',
     });
 
-    final response = await http.post(url, headers: headers, body: body);
+    try {
+      final response = await http.post(url, headers: headers, body: body);
 
-    final contentType = response.headers['content-type'];
+      final contentType = response.headers['content-type'];
 
-    if (response.statusCode == 200 &&
-        contentType != null &&
-        contentType.startsWith('audio')) {
-      try {
-        await _audioPlayer.play(BytesSource(response.bodyBytes));
-      } catch (e) {
-        throw Exception('Playback failed: $e');
+      if (response.statusCode == 200 &&
+          contentType != null &&
+          contentType.startsWith('audio')) {
+        // Save the audio data to a temporary file
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/tts_audio.mp3'); // Adjust extension based on content-type
+
+        // Write the response bytes to the file
+        await tempFile.writeAsBytes(response.bodyBytes);
+
+        // Play the audio using DeviceFileSource
+        await _audioPlayer.play(DeviceFileSource(tempFile.path));
+      } else {
+        throw Exception('TTS API failed: ${response.body}');
       }
-    } else {
-      throw Exception('TTS failed: ${response.body}');
+    } catch (e) {
+      throw Exception('Playback failed: $e');
     }
   }
 

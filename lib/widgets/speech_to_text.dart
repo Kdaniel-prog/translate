@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
@@ -15,7 +16,9 @@ class SpeechToText {
 
   final StatusCallback onStatus;
   final ResultCallback onResult;
-  final VoidCallback? onClearText; // optional callback
+  final VoidCallback? onClearText;
+
+  Timer? _silenceTimer;
 
   SpeechToText({
     required this.onStatus,
@@ -25,10 +28,19 @@ class SpeechToText {
 
   Future<void> initialize() async {
     speechAvailable = await _speech.initialize(
-      onStatus: (val) => onStatus(val),
+      onStatus: (val) {
+        onStatus('Speech status: $val');
+        if (val == 'done' || val == 'notListening' || val == 'error') {
+          isListening = false;
+          _silenceTimer?.cancel();
+          _speech.stop();
+        }
+      },
       onError: (val) {
-        onStatus("Error! ${val.errorMsg}");
+        onStatus("Error: ${val.errorMsg}");
         isListening = false;
+        _silenceTimer?.cancel();
+        _speech.stop();
       },
     );
 
@@ -54,10 +66,24 @@ class SpeechToText {
 
     await _speech.listen(
       onResult: (result) {
-        isListening = !result.finalResult;
         onResult(result.recognizedWords);
+        if (result.finalResult) {
+          isListening = false;
+          _silenceTimer?.cancel();
+          _speech.stop();
+          onStatus("Stopped listening (final result).");
+        } else {
+          _silenceTimer?.cancel();
+          _silenceTimer = Timer(const Duration(seconds: 5), () {
+            if (isListening) {
+              stopListening();
+              onStatus("Stopped listening (silence timeout).");
+            }
+          });
+        }
       },
       localeId: selectedLocaleId,
+      partialResults: true,
     );
     isListening = true;
     onStatus("Listening...");
@@ -66,8 +92,13 @@ class SpeechToText {
   void stopListening() async {
     await _speech.stop();
     isListening = false;
-
+    _silenceTimer?.cancel();
     onStatus("Stopped listening.");
   }
- 
+
+  void dispose() {
+    _speech.stop();
+    _silenceTimer?.cancel();
+    onStatus("Speech recognition disposed.");
+  }
 }

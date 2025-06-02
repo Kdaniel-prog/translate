@@ -32,16 +32,30 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   void initState() {
     super.initState();
     _speechService = SpeechToText(
-      onStatus: (newStatus) => setState(() => status = newStatus),
-      onResult: (newText) => setState(() {
-        isListening = false;
-        _textController.text = newText;
-        _textController.selection =
-            TextSelection.collapsed(offset: newText.length);
-      }),
-      onClearText: () => setState(() {
-        _textController.clear();
-      }),
+      onStatus: (newStatus) {
+        setState(() {
+          status = newStatus;
+          if (newStatus.contains('done') ||
+              newStatus.contains('notListening') ||
+              newStatus.contains('error')) {
+            isListening = false;
+          }
+        });
+      },
+      onResult: (newText) {
+        setState(() {
+          _textController.text = newText;
+          _textController.selection =
+              TextSelection.collapsed(offset: newText.length);
+        });
+      },
+      onClearText: () {
+        setState(() {
+          _textController.clear();
+          translatedText = "";
+          status = "Text cleared.";
+        });
+      },
     );
     _speechService.initialize();
   }
@@ -50,16 +64,21 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   void dispose() {
     _ttsService.dispose();
     _textController.dispose();
+    _speechService.dispose();
     super.dispose();
   }
 
   Future<void> _translateAndSpeak() async {
     final inputText = _textController.text.trim();
-    if (inputText.isEmpty) return;
+    if (inputText.isEmpty) {
+      setState(() => status = "No text to translate.");
+      return;
+    }
 
     try {
       setState(() => status = "Translating...");
-      final translated = await _translateService.translate(inputText, targetLanguage);
+      final translated =
+          await _translateService.translate(inputText, targetLanguage);
 
       setState(() {
         translatedText = translated;
@@ -79,13 +98,13 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
       _speechService.stopListening();
       setState(() {
         isListening = false;
+        status = "Stopped listening.";
       });
     } else {
       _speechService.startListening();
       setState(() {
         isListening = true;
         status = "Listening...";
-
       });
     }
   }
@@ -93,29 +112,25 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2196F3), // or your gradient if needed
-        title: Row(
-          children: [
-            const SizedBox(width: 8),
-            const Text(
-              "Translate App",
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
+        backgroundColor: const Color(0xFF2196F3),
+        title: const Text(
+          "Translate App",
+          style: TextStyle(color: Colors.white),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TranslateInputBox(
               controller: _textController,
               onClear: () {
-                _textController.clear();
                 setState(() {
+                  _textController.clear();
                   translatedText = "";
-                  status = "Cleared.";
+                  status = "Text cleared.";
                 });
               },
               onTranslate: _translateAndSpeak,
@@ -123,66 +138,70 @@ class _TranslateSpeakDemoState extends State<TranslateSpeakDemo> {
             const SizedBox(height: 16),
             Row(
               children: [
-                LanguageDropdown(
-                  selectedLanguage: sourceLanguage,
-                  languageList: languageList,
-                  onChanged: (val) => setState(() => sourceLanguage = val),
-                  backgroundColor: Color.fromARGB(255, 228, 229, 230), // Material Blue 500
-                  textColor: Colors.black,
+                Expanded(
+                  child: LanguageDropdown(
+                    selectedLanguage: sourceLanguage,
+                    languageList: languageList,
+                    onChanged: (val) => setState(() => sourceLanguage = val),
+                    backgroundColor: const Color.fromARGB(255, 228, 229, 230),
+                    textColor: Colors.black,
+                  ),
                 ),
-                const SizedBox(width: 12),                
-                // Swap button in the middle
+                const SizedBox(width: 12),
                 IconButton(
                   icon: const Icon(Icons.swap_horiz),
                   tooltip: "Swap languages",
                   onPressed: () {
-                  setState(() {
-                    // Swap the languages
-                    final tempLang = sourceLanguage;
-                    sourceLanguage = targetLanguage;
-                    targetLanguage = tempLang;
-
-                    // Swap the texts
-                    final tempText = _textController.text;
-                    _textController.text = translatedText;
-                    translatedText = tempText;
-                    status = "Languages and texts swapped.";
-                  });
-                },
+                    setState(() {
+                      final tempLang = sourceLanguage;
+                      sourceLanguage = targetLanguage;
+                      targetLanguage = tempLang;
+                      final tempText = _textController.text;
+                      _textController.text = translatedText;
+                      translatedText = tempText;
+                      status = "Languages and texts swapped.";
+                    });
+                  },
                 ),
-                const SizedBox(width: 12),                
-                LanguageDropdown(
-                  selectedLanguage: targetLanguage,
-                  languageList: languageList,
-                  onChanged: (val) => setState(() => targetLanguage = val),
-                  backgroundColor: Color.fromARGB(255, 156, 200, 250), // Material Blue 500
-                  textColor: Colors.white,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: LanguageDropdown(
+                    selectedLanguage: targetLanguage,
+                    languageList: languageList,
+                    onChanged: (val) => setState(() => targetLanguage = val),
+                    backgroundColor: const Color.fromARGB(255, 156, 200, 250),
+                    textColor: Colors.white,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            //Translated box
-            Expanded(
-              child: Stack(
-                children: [
-                  TranslationResultBox(
-                    translatedText: translatedText,
-                    onCopy: () => Clipboard.setData(ClipboardData(text: translatedText)),
-                    onSpeak: () => _ttsService.speak(translatedText, targetLanguage),
-                  ),
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: FloatingActionButton(
-                      onPressed: _toggleListening,
-                      child: Icon(isListening ? Icons.stop : Icons.mic),
-                    ),
-                  ),
-                ],
+            Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.3,
+              ),
+              child: TranslationResultBox(
+                translatedText: translatedText,
+                onCopy: () {
+                  if (translatedText.isNotEmpty) {
+                    Clipboard.setData(ClipboardData(text: translatedText));
+                    setState(() => status = "Text copied.");
+                  }
+                },
+                onSpeak: () {
+                  if (translatedText.isNotEmpty) {
+                    _ttsService.speak(translatedText, targetLanguage);
+                    setState(() => status = "Speaking...");
+                  }
+                },
               ),
             ),
+            const SizedBox(height: 16),
+            FloatingActionButton(
+              onPressed: _toggleListening,
+              child: Icon(isListening ? Icons.stop : Icons.mic),
+            ),
             const SizedBox(height: 10),
-            //status text
             Text(
               'Status: $status',
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
