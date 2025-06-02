@@ -16,6 +16,9 @@ class TranslationResultBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
+      constraints: const BoxConstraints(
+        maxHeight: 300, // Adjust as needed
+      ),
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -26,14 +29,17 @@ class TranslationResultBox extends StatelessWidget {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            translatedText,
-            style: const TextStyle(fontSize: 24, color: Colors.white),
-            textAlign: TextAlign.center,
+          Expanded(
+            child: SingleChildScrollView(
+              child: Text(
+                translatedText,
+                style: const TextStyle(fontSize: 24, color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
-          const SizedBox(height: 150),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [

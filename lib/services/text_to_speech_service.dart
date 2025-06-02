@@ -1,6 +1,6 @@
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
-import 'dart:convert';
 
 class TextToSpeechService {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -9,8 +9,7 @@ class TextToSpeechService {
   final String _apiHost = 'text-to-speach-api.p.rapidapi.com';
 
   Future<void> speak(String text, String lang) async {
-    final url =
-        Uri.parse('https://text-to-speach-api.p.rapidapi.com/text-to-speech');
+    final url = Uri.parse('https://text-to-speach-api.p.rapidapi.com/text-to-speech');
 
     final headers = {
       'x-rapidapi-key': _apiKey,
@@ -26,8 +25,16 @@ class TextToSpeechService {
 
     final response = await http.post(url, headers: headers, body: body);
 
-    if (response.statusCode == 200) {
-      await _audioPlayer.play(BytesSource(response.bodyBytes));
+    final contentType = response.headers['content-type'];
+
+    if (response.statusCode == 200 &&
+        contentType != null &&
+        contentType.startsWith('audio')) {
+      try {
+        await _audioPlayer.play(BytesSource(response.bodyBytes));
+      } catch (e) {
+        throw Exception('Playback failed: $e');
+      }
     } else {
       throw Exception('TTS failed: ${response.body}');
     }
