@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 
 class TextToSpeechService {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -33,15 +35,16 @@ class TextToSpeechService {
       if (response.statusCode == 200 &&
           contentType != null &&
           contentType.startsWith('audio')) {
-        // Save the audio data to a temporary file
-        final tempDir = await getTemporaryDirectory();
-        final tempFile = File('${tempDir.path}/tts_audio.mp3'); // Adjust extension based on content-type
-
-        // Write the response bytes to the file
-        await tempFile.writeAsBytes(response.bodyBytes);
-
-        // Play the audio using DeviceFileSource
-        await _audioPlayer.play(DeviceFileSource(tempFile.path));
+          if (kIsWeb) {
+            // On web, play directly from bytes
+            await _audioPlayer.play(BytesSource(response.bodyBytes));
+          } else {
+            // On mobile/desktop, save to temp and play
+            final tempDir = await getTemporaryDirectory();
+            final tempFile = File('${tempDir.path}/tts_audio.mp3');
+            await tempFile.writeAsBytes(response.bodyBytes);
+            await _audioPlayer.play(DeviceFileSource(tempFile.path));
+          }
       } else {
         throw Exception('TTS API failed: ${response.body}');
       }
