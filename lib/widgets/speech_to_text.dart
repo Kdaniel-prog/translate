@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:html' as html show window; // Only available in Flutter Web
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
@@ -26,7 +28,21 @@ class SpeechToText {
     this.onClearText,
   });
 
+  /// Detect if running on iOS Web (Safari/Chrome/Firefox all use WebKit)
+  bool get _isIOSWeb {
+    if (!kIsWeb) return false;
+    final userAgent = html.window.navigator.userAgent.toLowerCase();
+    return userAgent.contains("iphone") || userAgent.contains("ipad");
+  }
+
   Future<void> initialize() async {
+    if (_isIOSWeb) {
+      // Speech recognition not supported in iOS browsers
+      onStatus("Speech recognition not supported on iOS browsers.");
+      speechAvailable = false;
+      return;
+    }
+
     speechAvailable = await _speech.initialize(
       onStatus: (val) {
         onStatus('Speech status: $val');
@@ -60,7 +76,7 @@ class SpeechToText {
 
   void startListening() async {
     if (!speechAvailable) {
-      onStatus("Speech not initialized.");
+      onStatus("Speech not initialized or not supported.");
       return;
     }
 
@@ -90,6 +106,7 @@ class SpeechToText {
   }
 
   void stopListening() async {
+    if (!speechAvailable) return;
     await _speech.stop();
     isListening = false;
     _silenceTimer?.cancel();
